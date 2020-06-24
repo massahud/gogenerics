@@ -6,29 +6,38 @@ import (
 	"time"
 )
 
+// Future implements a version of the Future pattern. Future stores
+// a future read-only value. 
 type Future(type T) struct {
 	result T
 	err    error
 	ch     chan struct{}
 }
 
+// Get waits until the Future value is set finishes and returns the value
 func (f *Future(T)) Get() T {
 	<-f.ch
 	return f.result
 }
 
+// Err waits until the Future is set and returns the error
 func (f *Future(T)) Err() error {
 	<-f.ch
 	return f.err
 }
 
+// Done returns a channel that is closed when the Future is set with a value 
+// or error
 func (f *Future(T)) Done() <-chan struct{} {
 	return f.ch
 }
 
-type WorkerFn(type T) func(context.Context) (T, error)
+// GeneratorFn generates a value
+type GeneratorFn(type T) func(context.Context) (T, error)
 
-func NewFuture(type T)(ctx context.Context, worker WorkerFn(T)) *Future(T) {
+// NewFuture creates a new Future with the specified value generator function. 
+// NewFuture starts the generator when called.
+func NewFuture(type T)(ctx context.Context, worker GeneratorFn(T)) *Future(T) {
 
 	future := Future(T){ch: make(chan struct{})}
 
@@ -51,32 +60,17 @@ func NewFuture(type T)(ctx context.Context, worker WorkerFn(T)) *Future(T) {
 			future.err = result.err
 		}
 	}()
-
-	
-
 	return &future
 }
 
 func slowInt(ctx context.Context) (int, error) {
-	t := time.NewTimer(time.Second)
-	select {
-	case <-t.C:
-		return 1980, nil
-	case <-ctx.Done():
-		fmt.Println("ctx done")
-		return 0, ctx.Err()
-	}
+	time.Sleep(time.Second)
+	return 1980, nil
 }
 
-func slowString(ctx context.Context) (string, error) {
-	t := time.NewTimer(time.Second)
-	select {
-	case <-t.C:
-		return "bananas", nil
-	case <-ctx.Done():
-		fmt.Println("ctx done")
-		return "", ctx.Err()
-	}
+func slowString(_ context.Context) (string, error) {
+	time.Sleep(time.Second)
+	return "bananas", nil
 }
 
 func main() {
