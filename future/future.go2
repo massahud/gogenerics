@@ -7,7 +7,7 @@ import (
 )
 
 // Future implements a version of the Future pattern. Future stores
-// a future read-only value. 
+// a future read-only value.
 type Future(type T) struct {
 	result T
 	err    error
@@ -26,7 +26,7 @@ func (f *Future(T)) Err() error {
 	return f.err
 }
 
-// Done returns a channel that is closed when the Future is set with a value 
+// Done returns a channel that is closed when the Future is set with a value
 // or error
 func (f *Future(T)) Done() <-chan struct{} {
 	return f.ch
@@ -35,31 +35,34 @@ func (f *Future(T)) Done() <-chan struct{} {
 // GeneratorFn generates a value
 type GeneratorFn(type T) func(context.Context) (T, error)
 
-// NewFuture creates a new Future with the specified value generator function. 
+// NewFuture creates a new Future with the specified value generator function.
 // NewFuture starts the generator when called.
 func NewFuture(type T)(ctx context.Context, worker GeneratorFn(T)) *Future(T) {
 
 	future := Future(T){ch: make(chan struct{})}
 
-	done := make(chan struct{})
-	result := Future(T){}
+	done := make(chan (Future(T)))
 	
 	go func() {
+		var result Future(T)
 		result.result, result.err = worker(ctx)
+		done <- result
 		close(done)
 	}()
-
+	
 	go func() {
 		defer close(future.ch)
 
 		select {
 		case <-ctx.Done():
 			future.err = ctx.Err()
-		case <-done:
+			
+		case result := <-done:
 			future.result = result.result
 			future.err = result.err
 		}
 	}()
+	
 	return &future
 }
 
@@ -91,6 +94,7 @@ func main() {
 		select {
 		case <-futureStr.Done():
 			finished = true
+
 		default:
 		}
 		time.Sleep(100 * time.Millisecond)
