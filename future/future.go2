@@ -1,0 +1,120 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+type Future(type T) struct {
+	result T
+	err    error
+	ch     chan struct{}
+}
+
+func (f *Future(T)) Get() T {
+	<-f.ch
+	return f.result
+}
+
+func (f *Future(T)) Err() error {
+	<-f.ch
+	return f.err
+}
+
+func (f *Future(T)) Done() <-chan struct{} {
+	return f.ch
+}
+
+type WorkerFn(type T) func(context.Context) (T, error)
+
+func NewFuture(type T)(ctx context.Context, worker WorkerFn(T)) *Future(T) {
+
+	future := Future(T){ch: make(chan struct{})}
+
+	done := make(chan struct{})
+	result := Future(T){}
+	
+	go func() {
+		result.result, result.err = worker(ctx)
+		close(done)
+	}()
+
+	go func() {
+		defer close(future.ch)
+
+		select {
+		case <-ctx.Done():
+			future.err = ctx.Err()
+		case <-done:
+			future.result = result.result
+			future.err = result.err
+		}
+	}()
+
+	
+
+	return &future
+}
+
+func slowInt(ctx context.Context) (int, error) {
+	t := time.NewTimer(time.Second)
+	select {
+	case <-t.C:
+		return 1980, nil
+	case <-ctx.Done():
+		fmt.Println("ctx done")
+		return 0, ctx.Err()
+	}
+}
+
+func slowString(ctx context.Context) (string, error) {
+	t := time.NewTimer(time.Second)
+	select {
+	case <-t.C:
+		return "bananas", nil
+	case <-ctx.Done():
+		fmt.Println("ctx done")
+		return "", ctx.Err()
+	}
+}
+
+func main() {
+
+	ctx := context.Background()
+
+	//======= Get() =======
+	fmt.Println("using Get()")
+	futureInt := NewFuture(ctx, slowInt)
+	fmt.Printf("result: %d error: %v\n", futureInt.Get(), futureInt.Err())
+	fmt.Println()
+
+	//======= Done() =======
+	fmt.Println("Using <-Done()")
+	futureStr := NewFuture(ctx, slowString)
+
+	for finished := false; !finished; {
+		select {
+		case <-futureStr.Done():
+			finished = true
+		default:
+		}
+		time.Sleep(100 * time.Millisecond)
+		fmt.Print(".")
+	}
+	fmt.Printf("result: \"%s\" error: %v\n", futureStr.Get(), futureStr.Err())
+	fmt.Println()
+
+	//======= Context timeout =======
+	fmt.Println("Context timeout")
+
+	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	defer cancel()
+
+	futureInt = NewFuture(ctx, slowInt)
+	futureStr = NewFuture(ctx, slowString)
+
+	fmt.Printf("result: %d error: %v\n", futureInt.Get(), futureInt.Err())
+	fmt.Printf("result: \"%s\" error: %v\n", futureStr.Get(), futureStr.Err())
+
+}
