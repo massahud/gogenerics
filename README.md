@@ -3,15 +3,25 @@ Go Generic tests
 
 This repository contains my tests with go generics.
 
-Installation and execution is the same as described on [Bill Kennedy's generics examples](https://github.com/ardanlabs/gotraining/blob/master/topics/go/generics/README.md)
-
 - [Go Generic tests](#go-generic-tests)
-  - [Install go2go](#install-go2go)
-  - [Run go2go](#run-go2go)
+  - [Quick execution](#quick-execution)
+  - [go2go execution](#go2go-execution)
+    - [Install go2go](#install-go2go)
+    - [Run go2go](#run-go2go)
   - [License](#license)
 
-Install go2go
--------------
+Quick execution
+---------------
+
+Copy and paste the contents of the .go2 file to <https://go2goplay.golang.org/>
+and click `Run`.
+
+go2go execution
+---------------
+
+Installation and execution is the same as described on [Bill Kennedy's generics examples](https://github.com/ardanlabs/gotraining/blob/master/topics/go/generics/README.md)
+
+### Install go2go ###
 
 ```sh
 # Clone the current source code for Go on disk.
@@ -44,8 +54,7 @@ go version
 # go version devel +2faeebf4e5 Tue Jun 23 04:54:48 2020 +0000 darwin/amd64
 ```
 
-Run go2go
----------
+### Run go2go ###
 
 ```sh
 go tool go2go run file.go2
