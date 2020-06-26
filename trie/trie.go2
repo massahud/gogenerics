@@ -1,0 +1,165 @@
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"strconv"
+	"strings"
+)
+
+type Node(type T) struct {
+	ID    string
+	Data  T
+	Edges map[string]*Node(T)
+}
+
+func NewNode(type T)(id string) *Node(T) {
+	return &Node(T){ID: id, Edges: make(map[string](*Node(T)))}
+}
+
+type Trie(type T) struct {
+	root *Node(*T)
+}
+
+func NewTrie(type T)() *Trie(T) {
+	root := NewNode(*T)("")
+	return &Trie(T){
+		root: root,
+	}
+}
+
+// Put a value on the trie.
+func (t *Trie(T)) Put(key string, data T) {
+	if key == "" {
+		return
+	}
+	parent := t.root
+	for _, c := range key {
+		id := string(c)
+		node := parent.Edges[id]
+		if node == nil {
+			node = NewNode(*T)(id)
+			parent.Edges[id] = node
+		}
+		parent = node
+	}
+	// Could prune leafbranch if value is nil, but not really necessary
+	parent.Data = &data
+}
+
+func (t *Trie(T)) findNode(key string) *Node(*T) {
+	node := t.root
+	for _, c := range key {
+		id := string(c)
+		node = node.Edges[id]
+		if node == nil {
+			return nil
+		}
+	}
+	return node
+}
+
+func (t *Trie(T)) Contains(key string) bool {
+	node := t.findNode(key)
+	return node != nil && node.Data != nil
+}
+
+func (t *Trie(T)) Get(key string) (T, bool) {
+	node := t.findNode(key)
+	if node == nil || node.Data == nil {
+		var zero T
+		return zero, false
+	}
+	return *node.Data, true
+}
+
+func (t *Trie(T)) Remove(key string) bool {
+	node := t.findNode(key)
+
+	if node == nil || node.Data == nil {
+		return false
+	}
+	node.Data = nil
+	return true
+}
+
+func (t *Trie(T)) Dot(values bool) string {
+	var builder strings.Builder
+	queue := make([](*Node(*T)), 0, 100)
+	queue = append(queue, t.root)
+
+	builder.WriteString("digraph Trie {\n")
+	builder.WriteString(fmt.Sprintf("  n%p[ shape=\"circle\" label=%s style=\"filled\" fillcolor=\"#000000\"];\n", t.root, strconv.Quote(t.root.ID)))
+
+	for len(queue) > 0 {
+		n := queue[0]
+		queue = queue[1:]
+
+		// TODO write children in alphabetic order
+		for _, c := range n.Edges {
+
+			fillcolor := "#ffffff"
+			if c.Data != nil {
+				builder.WriteString("  {rank=same; ")
+				fillcolor = "#00000055"
+			}
+			builder.WriteString(fmt.Sprintf("  n%p[ label=%s style=\"filled\" fillcolor=%s];\n", c, strconv.Quote(c.ID), strconv.Quote(fillcolor)))
+
+			if values && c.Data != nil {
+				builder.WriteString(fmt.Sprintf("  d%p[ label=%s shape=\"rectangle\" ]; }\n", c.Data, strconv.Quote(fmt.Sprint(*c.Data))))
+				builder.WriteString(fmt.Sprintf("  n%p -> d%p[style=\"dashed\" arrowhead=\"none\"];\n", c, c.Data))
+			}
+			builder.WriteString(fmt.Sprintf("  n%p -> n%p;\n", n, c))
+
+			queue = append(queue, c)
+		}
+
+	}
+	builder.WriteString("}")
+	return builder.String()
+}
+
+func main() {
+
+	words := []string{
+		"tea",
+		"tee",
+		"tie",
+		"tree",
+		"three",
+		"bananas",
+		"A",
+		"banana",
+		"ban",
+	}
+
+	fmt.Println("# Execute output on dot (graphviz)")
+	fmt.Println("# or paste it here: https://dreampuf.github.io/GraphvizOnline/")
+	fmt.Println()
+
+	t := NewTrie(int)()
+
+	for i := range words {
+		fmt.Printf("# Put %s: %d\n", words[i], i)
+		t.Put(words[i], i)
+	}
+	fmt.Println()
+
+	for i := 0; i < 3; i++ {
+		idx := rand.Intn(len(words))
+		v, exists := t.Get(words[idx])
+		fmt.Printf("# Get %s: %d %t\n", words[idx], v, exists)
+	}
+
+	idx := rand.Intn(len(words))
+	fmt.Printf("# Contains %s: %t\n", words[idx], t.Contains(words[idx]))
+	fmt.Printf("# Remove %s: %t\n", words[idx], t.Remove(words[idx]))
+
+	fmt.Printf("# Contains %s: %t\n", words[idx], t.Contains(words[idx]))
+
+	v, exists := t.Get(words[idx])
+	fmt.Printf("# Get %s: %d %t\n", words[idx], v, exists)
+	fmt.Println()
+
+	fmt.Println(t.Dot(true))
+}
