@@ -40,7 +40,7 @@ cd src
 ./make.bash
 
 # Navigate back to where you cloned the repo.
-cd $GOPATH/github.com/ardanlabs/gotraining/topics/go/generics
+cd $GOPATH/github.com/massahud/gogenerics
 
 # Then source the `.env` file located in the generics folder.
 # export GO2GO_DEST=$HOME/go2go/goroot

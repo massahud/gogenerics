@@ -8,43 +8,43 @@ import (
 
 // Future implements a version of the Future pattern. Future stores
 // a future read-only value.
-type Future(type T) struct {
+type Future[type T] struct {
 	result T
 	err    error
 	ch     chan struct{}
 }
 
 // Get waits until the Future value is set finishes and returns the value
-func (f *Future(T)) Get() T {
+func (f *Future[T]) Get() T {
 	<-f.ch
 	return f.result
 }
 
 // Err waits until the Future is set and returns the error
-func (f *Future(T)) Err() error {
+func (f *Future[T]) Err() error {
 	<-f.ch
 	return f.err
 }
 
 // Done returns a channel that is closed when the Future is set with a value
 // or error
-func (f *Future(T)) Done() <-chan struct{} {
+func (f *Future[T]) Done() <-chan struct{} {
 	return f.ch
 }
 
 // GeneratorFn generates a value
-type GeneratorFn(type T) func(context.Context) (T, error)
+type GeneratorFn[type T] func(context.Context) (T, error)
 
 // NewFuture creates a new Future with the specified value generator function.
 // NewFuture starts the generator when called.
-func NewFuture(type T)(ctx context.Context, worker GeneratorFn(T)) *Future(T) {
+func NewFuture[type T](ctx context.Context, worker GeneratorFn[T]) *Future[T] {
 
-	future := Future(T){ch: make(chan struct{})}
+	future := Future[T]{ch: make(chan struct{})}
 
-	done := make(chan (Future(T)))
+	done := make(chan (Future[T]))
 	
 	go func() {
-		var result Future(T)
+		var result Future[T]
 		result.result, result.err = worker(ctx)
 		done <- result
 		close(done)

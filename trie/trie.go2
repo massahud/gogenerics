@@ -7,29 +7,29 @@ import (
 	"strings"
 )
 
-type Node(type T) struct {
+type Node[type T] struct {
 	ID    string
 	Data  T
-	Edges map[string]*Node(T)
+	Edges map[string]*Node[T]
 }
 
-func NewNode(type T)(id string) *Node(T) {
-	return &Node(T){ID: id, Edges: make(map[string](*Node(T)))}
+func NewNode[type T](id string) *Node[T] {
+	return &Node[T]{ID: id, Edges: make(map[string](*Node[T]))}
 }
 
-type Trie(type T) struct {
-	root *Node(*T)
+type Trie[type T] struct {
+	root *Node[*T]
 }
 
-func NewTrie(type T)() *Trie(T) {
-	root := NewNode(*T)("")
-	return &Trie(T){
+func NewTrie[type T]() *Trie[T] {
+	root := NewNode[*T]("")
+	return &Trie[T]{
 		root: root,
 	}
 }
 
 // Put a value on the trie.
-func (t *Trie(T)) Put(key string, data T) {
+func (t *Trie[T]) Put(key string, data T) {
 	if key == "" {
 		return
 	}
@@ -38,7 +38,7 @@ func (t *Trie(T)) Put(key string, data T) {
 		id := string(c)
 		node := parent.Edges[id]
 		if node == nil {
-			node = NewNode(*T)(id)
+			node = NewNode[*T](id)
 			parent.Edges[id] = node
 		}
 		parent = node
@@ -47,7 +47,7 @@ func (t *Trie(T)) Put(key string, data T) {
 	parent.Data = &data
 }
 
-func (t *Trie(T)) findNode(key string) *Node(*T) {
+func (t *Trie[T]) findNode(key string) *Node[*T] {
 	node := t.root
 	for _, c := range key {
 		id := string(c)
@@ -59,12 +59,12 @@ func (t *Trie(T)) findNode(key string) *Node(*T) {
 	return node
 }
 
-func (t *Trie(T)) Contains(key string) bool {
+func (t *Trie[T]) Contains(key string) bool {
 	node := t.findNode(key)
 	return node != nil && node.Data != nil
 }
 
-func (t *Trie(T)) Get(key string) (T, bool) {
+func (t *Trie[T]) Get(key string) (T, bool) {
 	node := t.findNode(key)
 	if node == nil || node.Data == nil {
 		var zero T
@@ -73,7 +73,7 @@ func (t *Trie(T)) Get(key string) (T, bool) {
 	return *node.Data, true
 }
 
-func (t *Trie(T)) Remove(key string) bool {
+func (t *Trie[T]) Remove(key string) bool {
 	node := t.findNode(key)
 
 	if node == nil || node.Data == nil {
@@ -83,9 +83,9 @@ func (t *Trie(T)) Remove(key string) bool {
 	return true
 }
 
-func (t *Trie(T)) Dot(values bool) string {
+func (t *Trie[T]) Dot(values bool) string {
 	var builder strings.Builder
-	queue := make([](*Node(*T)), 0, 100)
+	queue := make([](*Node[*T]), 0, 100)
 	queue = append(queue, t.root)
 
 	builder.WriteString("digraph Trie {\n")

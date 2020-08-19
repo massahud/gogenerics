@@ -6,7 +6,7 @@ import (
 	"math/rand"
 )
 
-type Comparator(type T) func(a, b T) int
+type Comparator[type T] func(a, b T) int
 
 // OrderablePrimitive is a type constraint that matches any orderable type.
 // An orderable type is one that supports the <, <=, >, and >= operators.
@@ -14,7 +14,7 @@ type OrderablePrimitive interface {
 	type int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr, float32, float64, string
 }
 
-func PrimitiveComparator(type T OrderablePrimitive)(a, b T) int {
+func PrimitiveComparator[type T OrderablePrimitive](a, b T) int {
 	if a < b {
 		return -1
 	}
@@ -24,51 +24,51 @@ func PrimitiveComparator(type T OrderablePrimitive)(a, b T) int {
 	return 0
 }
 
-func Reverse(type T)(comparator Comparator(T)) func(a, b T) int {
+func Reverse[type T](comparator Comparator[T]) func(a, b T) int {
 	return func(a, b T) int {
 		return -comparator(a, b)
 	}
 }
 
-type heapSlice(type T) struct {
+type heapSlice[type T] struct {
 	array   []T
-	compare Comparator(T)
+	compare Comparator[T]
 }
 
-func (h heapSlice(T)) Len() int {
+func (h heapSlice[T]) Len() int {
 	return len(h.array)
 }
-func (h heapSlice(T)) Swap(i, j int) {
+func (h heapSlice[T]) Swap(i, j int) {
 	h.array[i], h.array[j] = h.array[j], h.array[i]
 }
 
-func (h heapSlice(T)) Less(i, j int) bool {
+func (h heapSlice[T]) Less(i, j int) bool {
 	return h.compare(h.array[i], h.array[j]) < 0
 }
-func (h *heapSlice(T)) Push(x interface{}) {
+func (h *heapSlice[T]) Push(x interface{}) {
 	h.array = append(h.array, x.(T))
 }
 
-func (h *heapSlice(T)) Pop() interface{} {
+func (h *heapSlice[T]) Pop() interface{} {
 	n := len(h.array)
 	x := h.array[n-1]
 	h.array = h.array[:n-1]
 	return x
 }
 
-func newHeapSlice(type T)(compare Comparator(T)) *heapSlice(T) {
-	return &heapSlice(T){
+func newHeapSlice[type T](compare Comparator[T]) *heapSlice[T] {
+	return &heapSlice[T]{
 		array:   make([]T, 0),
 		compare: compare,
 	}
 }
 
-type Heap(type T) struct {
-	heap *heapSlice(T)
+type Heap[type T] struct {
+	heap *heapSlice[T]
 }
 
-func NewHeap(type T)(compare Comparator(T)) Heap(T) {
-	h := Heap(T){
+func NewHeap[type T](compare Comparator[T]) Heap[T] {
+	h := Heap[T]{
 		heap: newHeapSlice(compare),
 	}
 	heap.Init(h.heap)
@@ -76,11 +76,11 @@ func NewHeap(type T)(compare Comparator(T)) Heap(T) {
 }
 
 
-func (h Heap(T)) Push(item T) {
+func (h Heap[T]) Push(item T) {
 	heap.Push(h.heap, item)
 }
 
-func (h Heap(T)) Pop() T {
+func (h Heap[T]) Pop() T {
 	return heap.Pop(h.heap).(T)
 }
 
