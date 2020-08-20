@@ -1,0 +1,83 @@
+package main
+
+import (
+	"fmt"
+	"sync/atomic"
+)
+
+var nextId int64
+
+type TreeNode[type T] struct {
+	ID    int64
+	Left  *TreeNode[T]
+	Right *TreeNode[T]
+	Value T
+}
+
+func NewNode[type T](value T) *TreeNode[T] {
+	return &TreeNode[T]{
+		ID:    atomic.AddInt64(&nextId, 1),
+		Value: value,
+	}
+}
+
+func PostOrder[type T](node *TreeNode[T], postOrder func(*TreeNode[T])) {
+	if node == nil {
+		return
+	}
+
+	PostOrder(node.Left, postOrder)
+	PostOrder(node.Right, postOrder)
+	postOrder(node)
+}
+
+func createTree() *TreeNode[string] {
+	root := NewNode("a")
+	root.Left = NewNode("b")
+	root.Right = NewNode("c")
+	root.Left.Left = NewNode("d")
+	root.Left.Right = NewNode("e")
+
+	root.Left.Left.Left = NewNode("f")
+	root.Left.Right.Left = NewNode("g")
+	root.Left.Right.Left.Right = NewNode("h")
+
+	return root
+}
+
+func main() {
+	root := createTree()
+
+	toLeaf := make(map[int64]int)
+	var maxWidth int
+	var nodeWithMax *TreeNode[string]
+
+	calculateMaxWidth := func(node *TreeNode[string]) {
+
+		var left int
+		var right int
+		if node.Left != nil {
+			left = toLeaf[node.Left.ID] + 1
+		}
+		if node.Right != nil {
+			right = toLeaf[node.Right.ID] + 1
+		}
+
+		nodeToLeaf := left
+		if right > left {
+			nodeToLeaf = right
+		}
+		toLeaf[node.ID] = nodeToLeaf
+
+		width := left + right
+		if width > maxWidth {
+			maxWidth = width
+			nodeWithMax = node
+		}
+	}
+
+	PostOrder(root, calculateMaxWidth)
+
+	fmt.Println("Width:", maxWidth)
+	fmt.Println("Node: ID:", nodeWithMax.ID, "Value:",nodeWithMax.Value)
+}
