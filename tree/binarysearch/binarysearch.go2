@@ -1,0 +1,125 @@
+package main
+
+import "fmt"
+
+type TreeNode[type T] struct {
+	ID    int
+	Left  *TreeNode[T]
+	Right *TreeNode[T]
+	Value T
+}
+
+func NewNode[type T](id int, value T) *TreeNode[T] {
+	return &TreeNode[T]{
+		ID:    id,
+		Value: value,
+	}
+}
+
+func PreOrder[type T](node *TreeNode[T], preOrder func(*TreeNode[T])) {
+	if node == nil {
+		return
+	}
+	preOrder(node)
+	PreOrder(node.Left, preOrder)
+	PreOrder(node.Right, preOrder)
+}
+
+func InOrder[type T](node *TreeNode[T], inOrder func(*TreeNode[T])) {
+	if node == nil {
+		return
+	}
+
+	InOrder(node.Left, inOrder)
+	inOrder(node)
+	InOrder(node.Right, inOrder)
+}
+
+
+func PostOrder[type T](node *TreeNode[T], postOrder func(*TreeNode[T])) {
+	if node == nil {
+		return
+	}
+
+	PostOrder(node.Left, postOrder)
+	PostOrder(node.Right, postOrder)
+	postOrder(node)
+}
+
+
+func DFS[type T](node *TreeNode[T], preOrder, inOrder, postOrder func(*TreeNode[T])) {
+	if node == nil {
+		return
+	}
+	if preOrder != nil {
+		preOrder(node)
+	}
+	DFS(node.Left, preOrder, inOrder, postOrder)
+	if inOrder != nil {
+		inOrder(node)
+	}
+	DFS(node.Right, preOrder, inOrder, postOrder)
+	if postOrder != nil {
+		postOrder(node)
+	}
+}
+
+func printNode[type T](node *TreeNode[T]) {
+	fmt.Println(node.Value)
+}
+
+func createTree() *TreeNode[string] {
+	root := NewNode(0, "d")
+	root.Left = NewNode(1, "b")
+	root.Right = NewNode(2, "e")
+	root.Left.Left = NewNode(3, "a")
+	root.Left.Right = NewNode(4, "c")
+
+	return root
+}
+
+func appendNodes[type T](list *[]*TreeNode[T]) func(*TreeNode[T]) {
+	return func(n *TreeNode[T]) {
+		*list = append(*list, n)
+	}
+}
+
+func main() {
+	root := createTree()
+
+	fmt.Println(" == Pre Order == ")
+	PreOrder(root, printNode[string])
+
+	fmt.Println(" == In Order == ")
+	InOrder(root, printNode[string])
+
+	fmt.Println(" == Post Order == ")
+	PostOrder(root, printNode[string])
+
+	fmt.Println(" == DFS == ")
+	pre := make([]*TreeNode[string], 0)
+	in := make([]*TreeNode[string], 0)
+	post := make([]*TreeNode[string], 0)
+
+	DFS(
+		root,
+		appendNodes(&pre),
+		appendNodes(&in),
+		appendNodes(&post),
+	)
+
+	for _, n := range pre {
+		fmt.Print("pre ")
+		printNode(n)
+	}
+
+	for _, n := range in {
+		fmt.Print("in ")
+		printNode(n)
+	}
+	for _, n := range post {
+		fmt.Print("post ")
+		printNode(n)
+	}
+
+}
